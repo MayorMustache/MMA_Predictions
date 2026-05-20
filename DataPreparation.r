@@ -4,7 +4,6 @@
 # Description: This script calculates additional variables and paritioning the 
 #              data into train, test and validation. 
 # Author:      Michael Schenk
-# Date:        09.05.2026
 # Dataset:     UFC Data by https://www.kaggle.com/datasets/neelagiriaditya/ufc-datasets-1994-2025
 # =============================================================================
 
