@@ -16,7 +16,7 @@ Sys.setLanguage("en")
 rm(list = ls())
 
 # Load the needed packages
-pacman::p_load(dplyr, tidyr, RKaggle, lubridate)
+pacman::p_load(dplyr, tidyr, RKaggle, lubridate, forcats)
 
 # Load the dataset from Kaggle
 KaggleData <- RKaggle::get_dataset("neelagiriaditya/ufc-datasets-1994-2025")
@@ -34,8 +34,6 @@ custome_cumsum <- function(values){
 
 
 # --- 3. Calculate Variables that can change every fight------------------------
-# Calculation of Variables that can change every fight, i.e. the win/loss record
-#  changes with every fight 
 
 ChangingVariables <- KaggleData[[4]] %>% 
   
@@ -104,17 +102,38 @@ FullPreparedData <- KaggleData[[4]] %>%
                 difference_age = r_age - b_age,
                 difference_winrate = r_rec_winrate - b_rec_winrate) %>% 
   
-  
-  
   # Calculate some possible target variables
   dplyr::mutate(TotalSigStrikes = r_sig_str_landed + b_sig_str_landed,
                 TotalTakedown = r_td_landed + b_td_landed,
                 winner_red = winner_id == r_id) %>% 
   
+  # Regroup some of the factor varibles
+  
+  
   # Change the type of somme variables in order for mlr3, etc. to work
   dplyr::mutate(dplyr::across(c(location, division, method, referee, r_id, b_id, r_stance, b_stance), as.factor))
 
 
+
+
+FullPreparedData <- FullPreparedData %>%
+  mutate(division = case_when(
+    str_detect(division, "women's strawweight") ~ "women's strawweight",
+    str_detect(division, "women's flyweight")   ~ "women's flyweight",
+    str_detect(division, "women's bantamweight") ~ "women's bantamweight",
+    str_detect(division, "women's featherweight") ~ "women's featherweight",
+    str_detect(division, "light heavyweight")   ~ "light heavyweight",
+    str_detect(division, "super heavyweight")   ~ "super heavyweight",
+    str_detect(division, "heavyweight")         ~ "heavyweight",
+    str_detect(division, "middleweight")        ~ "middleweight",
+    str_detect(division, "welterweight")        ~ "welterweight",
+    str_detect(division, "featherweight")       ~ "featherweight",
+    str_detect(division, "lightweight")         ~ "lightweight",
+    str_detect(division, "bantamweight")        ~ "bantamweight",
+    str_detect(division, "flyweight")           ~ "flyweight",
+    str_detect(division, "strawweight")         ~ "strawweight",
+    TRUE ~ "other"
+  ))
 
 # --- 5. Partition the data into train, test and validation --------------------
 
