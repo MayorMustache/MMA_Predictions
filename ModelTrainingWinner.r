@@ -16,7 +16,8 @@ Sys.setLanguage("en")
 rm(list = ls())
 
 # Load the needed packages
-pacman::p_load(dplyr, mlr3, mlr3viz, mlr3learners, mlr3pipelines, mlr3filters, mlr3tuning, future)
+# mlr3temporal might need to be installed from GitHub, remotes::install_github("mlr-org/mlr3temporal")
+pacman::p_load(dplyr, mlr3, mlr3viz, mlr3learners, mlr3pipelines, mlr3filters, mlr3tuning, future, mlr3temporal)
 
 # Increase the number of used cores
 future::plan("multisession", workers = availableCores() - 2)
@@ -33,8 +34,8 @@ prepare_data <- function(my_data){
     dplyr::mutate(date = as.integer(date)) %>% 
     
     dplyr::select(c(winner_red, date, title_fight, total_rounds,
-                              r_height, r_stance, r_age, r_rec_wins_all, r_rec_wins_ko, r_rec_wins_sub, r_rec_wins_decision, r_rec_loss_all, r_rec_loss_ko, r_rec_loss_sub, r_rec_loss_decision, r_rec_other,
-                              b_height, b_stance, b_age, b_rec_wins_all, b_rec_wins_ko, b_rec_wins_sub, b_rec_wins_decision, b_rec_loss_all, b_rec_loss_ko, b_rec_loss_sub, b_rec_loss_decision, b_rec_other)) %>% 
+                              r_height, r_stance, r_age, r_rec_wins_all, r_rec_wins_ko, r_rec_wins_sub, r_rec_wins_decision, r_rec_loss_all, r_rec_loss_ko, r_rec_loss_sub, r_rec_loss_decision,
+                              b_height, b_stance, b_age, b_rec_wins_all, b_rec_wins_ko, b_rec_wins_sub, b_rec_wins_decision, b_rec_loss_all, b_rec_loss_ko, b_rec_loss_sub, b_rec_loss_decision)) %>% 
     
     dplyr::filter(!is.na(winner_red))
   
@@ -62,10 +63,18 @@ prepare_learner <- function(lrn_key, remove_corr = FALSE, logscale_trans = TRUE)
       lrn_key,
       predict_type = "prob",
       type = "C-classification",
-      #kernel = to_tune(c("radial", "linear")),
-      kernel = to_tune(c("linear")),
+      kernel = to_tune(c("radial", "polynomial", "sigmoid")),
       cost  = to_tune(1e-2, 1e3, logscale = logscale_trans),
       gamma = to_tune(1e-3, 1e1,   logscale = logscale_trans)
+    )
+  }
+  else if(lrn_key == "classif.xgboost"){
+    
+    lrn_obj = mlr3::lrn(
+      lrn_key, 
+      predict_type = "prob",
+      booster = to_tune(c("gbtree", "gblinear", "dart")),
+      feature_selector = to_tune(c("cyclic", "shuffle"))
     )
   }
   else{
@@ -81,8 +90,6 @@ prepare_learner <- function(lrn_key, remove_corr = FALSE, logscale_trans = TRUE)
    # median is for numeric and mode for factor
     mlr3pipelines::po("imputemedian") %>>%
     mlr3pipelines::po("imputemode")
-   
-  
    
    
   lrn_pipeline %>>% lrn_obj %>% mlr3::as_learner()
@@ -103,54 +110,56 @@ tsk_Winner <- mlr3::as_task_classif(x = TrainData, target = "winner_red")
 tsk_Winner$col_roles$order <- "date"
 tsk_Winner$col_roles$feature <- setdiff(tsk_Winner$col_roles$feature, "date")
 
+inner_resampling <- mlr3::rsmp("forecast_cv", folds = 3, fixed_window = TRUE)
+outer_resampling <- mlr3::rsmp("forecast_cv", folds = 5, window_size = 5000, horizon = 500, fixed_window = TRUE)
 
-
-# --- 4. Tune and Test the models ----------------------------------------------
+# --- 4. Set up the models -----------------------------------------------------
 
 ## --- 4.1 Random Forest -------------------------------------------------------
 
-lrn_ranger <- prepare_learner(lrn_key = "classif.ranger")
-
-instance_ranger <- mlr3tuning::tune(
-  tuner = mlr3tuning::tnr("grid_search", resolution = 5, batch_size = availableCores() - 2),
-  task = tsk_Winner,
-  learner = lrn_ranger,
-  resampling = mlr3::rsmp("holdout", ratio = 0.8),
-  measures = mlr3::msr("classif.bacc"),
-  store_benchmark_result = TRUE
+at_ranger <- mlr3tuning::auto_tuner(
+  tuner      = mlr3tuning::tnr("grid_search", batch_size = availableCores() - 2),
+  learner    = prepare_learner("classif.ranger"),
+  resampling = inner_resampling,
+  measure    = mlr3::msr("classif.bacc")
 )
-
-
-as.data.table(instance_ranger$archive, measures = mlr3::msrs(c("classif.auc", "classif.ce"))) %>% View()
-
-lrn_ranger$param_set$values <- instance_ranger$result_learner_param_vals
-
-lrn_ranger$train(tsk_Winner)
-
-lrn_ranger$predict_newdata(TestData)$score(mlr3::msrs(c("classif.bacc", "classif.auc", "classif.ce")))
 
 ## --- 4.2 SVM -----------------------------------------------------------------
 
-lrn_svm <- prepare_learner(lrn_key = "classif.svm")
 
-instance_svm <- mlr3tuning::tune(
-  tuner = mlr3tuning::tnr("random_search", batch_size = availableCores() - 2),
-  task = tsk_Winner, 
-  learner = lrn_svm,
-  resampling = mlr3::rsmp("holdout", ratio = 0.8),
-  measures = mlr3::msr("classif.bacc"), 
-  terminator = mlr3tuning::trm("evals", n_evals = 30)
+at_svm <- mlr3tuning::auto_tuner(
+  tuner      = mlr3tuning::tnr("random_search", batch_size = availableCores() - 2),
+  learner    = prepare_learner("classif.svm"),
+  resampling = inner_resampling,
+  measure    = mlr3::msr("classif.bacc"),
+  terminator = mlr3tuning::trm("evals", n_evals = 20)
 )
 
-as.data.table(instance_svm$archive, measures = mlr3::msrs(c("classif.auc", "classic.ce"))) %>% View()
+## --- 4.3 XGboost -------------------------------------------------------------
 
-lrn_svm$param_set$values <- instance_svm$result_learner_param_vals
+at_xgboost <- mlr3tuning::auto_tuner(
+  tuner      = mlr3tuning::tnr("grid_search", batch_size = availableCores() - 2),
+  learner    = prepare_learner("classif.xgboost"),
+  resampling = inner_resampling,
+  measure    = mlr3::msr("classif.bacc")
+)
 
-lrn_svm$train(tsk_Winner)
+# --- 5. Compare and evaluate the models ---------------------------------------
 
-lrn_svm$predict_newdata(TestData)$score(mlr3::msrs(c("classif.bacc", "classif.auc", "classif.ce")))
+design <- mlr3::benchmark_grid(
+  tasks       = tsk_Winner,
+  learners    = list(at_ranger, at_xgboost, at_svm),
+  resamplings = outer_resampling
+)
 
-# --- 5. Compare the models on the test data -----------------------------------
+bmr <- mlr3::benchmark(design)
+bmr$aggregate(mlr3::msr("classif.bacc"))
 
+# --- 6. Check the performance on the test data --------------------------------
 
 # --- 6. Train and save the final model ----------------------------------------
+
+
+
+
+
