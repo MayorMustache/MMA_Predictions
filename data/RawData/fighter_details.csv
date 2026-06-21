@@ -1,0 +1,39 @@
+id,name,nick_name,wins,losses,draws,height,weight,reach,stance,dob,splm,str_acc,sapm,str_def,td_avg,td_avg_acc,td_def,sub_avg
+c0ac37a4a1133da9,Marcus McGhee,The Maniac,11,2,0,172.72,61.23,175.26,Orthodox,"May 07, 1990",5.44,43,3.64,56,0.24,11,90,0.2
+d3df1add9d9a7efb,Derrick Lewis,The Black Beast,29,14,0,190.5,117.93,200.66,Orthodox,"Feb 07, 1985",2.41,48,2.79,38,0.53,25,51,0.0
+8061a3136026a673,Jeisla Chaves,A Braba,8,0,0,167.64,56.7,172.72,Orthodox,"Feb 02, 1997",4.97,56,4.2,53,1.5,37,62,0.5
+1e4f273069fb9e85,Fares Ziam,The Smile Killer,18,5,0,185.42,70.31,190.5,Orthodox,"Mar 21, 1997",2.68,52,1.58,63,1.86,42,70,0.5
+b1e5bcaad32a3cac,Priscila Cachoeira,Zombie Girl,13,9,0,170.18,61.23,165.1,Orthodox,"Aug 19, 1988",4.35,44,7.45,45,0.37,50,69,0.0
+f166e93d04a8c274,Diego Lopes,,28,8,0,180.34,65.77,182.88,Orthodox,"Dec 30, 1994",3.79,47,4.65,46,0.82,46,68,1.3
+97cf1a2c7c5e7889,Steve Garcia,Mean Machine,19,6,0,182.88,65.77,190.5,Southpaw,"May 22, 1992",5.46,48,2.22,59,0.77,40,89,0.4
+9e8f6c728eb01124,Justin Gaethje,The Highlight,28,5,0,180.34,70.31,177.8,Orthodox,"Nov 14, 1988",6.29,57,6.83,50,0.3,26,73,0.0
+54f64b5e283b0ce7,Ilia Topuria,El Matador,17,1,0,170.18,70.31,175.26,Orthodox,"Jan 21, 1997",4.82,50,3.97,62,1.73,57,95,0.9
+450bcab0968562c4,John Yannis,,10,5,0,170.18,61.23,177.8,Southpaw,"Jul 07, 1994",3.56,49,4.07,62,0.0,0,80,0.0
+9c393e836a852f30,Mauricio Ruffy,,14,2,0,180.34,70.31,190.5,Orthodox,"Jun 17, 1996",4.19,57,3.83,59,0.0,0,86,0.0
+6c3b2525436cf5d4,Tom Nolan,Big Train,11,1,0,190.5,70.31,185.42,Southpaw,"Mar 08, 2000",4.84,45,3.74,48,1.08,26,58,1.4
+67c1d46f4ed16f9e,Matt Schnell,Danger,17,11,0,172.72,56.7,177.8,Orthodox,"Jan 15, 1990",4.05,40,4.18,54,0.59,45,43,1.2
+c15fa95b9a12fde4,Junior Tafa,The Juggernaut,7,6,0,190.5,92.99,190.5,Orthodox,"Sep 21, 1996",3.53,52,2.7,52,0.0,0,72,0.0
+3fa97913cfd205d3,Alessandro Costa,Nono,16,5,0,162.56,56.7,170.18,Orthodox,"Jan 28, 1996",3.86,46,3.7,56,0.77,26,86,0.4
+e5549c82bfb5582d,Alex Pereira,Poatan,13,4,0,193.04,92.99,200.66,Orthodox,"Jul 07, 1987",5.01,61,3.72,52,0.11,50,80,0.2
+c3d2b9bcb4cead6b,Yuneisy Duben,,6,2,0,162.56,56.7,165.1,Orthodox,"Jul 08, 1996",5.65,52,5.31,42,1.68,50,50,0.0
+d6c0cdd7e467c440,Kyle Daukaus,,17,5,0,187.96,83.91,193.04,Southpaw,"Feb 27, 1993",3.16,53,2.94,42,1.97,25,79,2.0
+4b93a88f3b1de35b,Michael Chandler,Iron,23,11,0,172.72,70.31,180.34,Orthodox,"Apr 24, 1986",3.91,49,4.51,43,1.88,37,61,0.5
+791c8437b341fba5,Joanderson Brito,Tubarao,19,5,1,172.72,65.77,182.88,Orthodox,"Feb 11, 1995",2.38,50,2.28,43,3.23,67,57,1.2
+24656ef4d605c96f,Aiemann Zahabi,Icemann,14,3,0,172.72,61.23,172.72,Orthodox,"Nov 19, 1987",4.47,48,4.11,68,0.12,14,83,0.0
+294aa73dbf37d281,Bruno Silva,Bulldog,15,9,2,162.56,56.7,165.1,Orthodox,"Mar 16, 1990",3.95,51,4.72,51,1.94,24,72,0.2
+4144798612ef96e5,Edmen Shahbazyan,The Golden Boy,16,6,0,187.96,83.91,187.96,Orthodox,"Nov 20, 1997",4.06,48,3.87,50,1.43,36,66,0.4
+1c23ec2f1b71be40,Iwo Baraniewski,Rudy,9,0,0,182.88,92.99,185.42,Orthodox,"Nov 20, 1998",11.35,57,8.65,52,0.0,0,100,0.0
+8bd4200561c77a62,Ketlen Souza,Esquentadinha,17,6,0,160.02,52.16,160.02,Orthodox,"Aug 18, 1994",4.11,57,3.89,53,0.45,13,53,0.2
+c0d5c0c95c59050b,Ariane Carnelossi,Sorriso,15,5,0,157.48,52.16,154.94,Orthodox,"Nov 17, 1992",2.68,38,4.69,43,1.06,50,22,0.2
+ac026518a9b4dc0f,Jordan Leavitt,The Monkey King,13,4,0,175.26,65.77,180.34,Southpaw,"Jun 02, 1995",2.18,58,1.57,59,2.97,30,30,1.2
+787bb1f087ccff8a,Ciryl Gane,Bon Gamin,14,2,0,193.04,112.04,205.74,Orthodox,"Apr 12, 1990",5.4,61,2.31,60,0.66,23,47,0.6
+faf317c665546a36,Santiago Luna,BorderBoy,8,1,0,175.26,61.23,187.96,Orthodox,"Aug 06, 2004",4.74,53,2.76,67,2.3,71,57,0.9
+af9efbfd63d39734,Chelsea Chandler,,7,4,0,172.72,61.23,172.72,Southpaw,"Nov 23, 1990",3.52,45,4.27,40,0.81,60,25,0.3
+01641ba5df0c69b0,Gabriel Bonfim,Marretinha,20,1,0,185.42,77.11,182.88,Orthodox,"Aug 20, 1997",4.76,47,3.61,64,2.57,53,78,1.0
+35673bf5204524ee,Bo Nickal,,9,1,0,185.42,83.91,193.04,Southpaw,"Jan 14, 1996",3.36,61,1.93,60,3.12,57,100,2.3
+d9c6f19f958643e9,Bryce Mitchell,Thug Nasty,19,4,0,177.8,61.23,177.8,Southpaw,"Oct 04, 1994",2.19,59,1.51,58,3.12,36,38,1.3
+955da1675ad58a50,Josh Hokit,,10,0,0,185.42,106.59,185.42,Orthodox,"Nov 12, 1997",9.29,64,5.28,48,3.73,47,77,0.4
+5ef94841c4bc3f86,Edgar Chairez,Puro Chicali,14,6,0,170.18,56.7,180.34,Orthodox,"Jan 27, 1996",3.76,46,4.71,46,0.0,0,47,1.4
+b1b0729d27936f2f,Belal Muhammad,Remember the Name,24,6,0,180.34,77.11,182.88,Orthodox,"Jul 09, 1988",4.36,42,3.92,55,1.98,35,90,0.1
+b50a426a33da0012,Sean O'Malley,Suga,20,3,0,180.34,61.23,182.88,Switch,"Oct 24, 1994",5.98,60,3.4,59,0.23,42,60,0.2
+2f181c0467965b98,Brendan Allen,All In,27,7,0,187.96,83.91,190.5,Orthodox,"Dec 28, 1995",3.75,52,3.78,47,1.52,41,57,1.1

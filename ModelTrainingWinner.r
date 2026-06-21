@@ -53,7 +53,7 @@ prepare_learner <- function(lrn_key, remove_corr = FALSE, logscale_trans = TRUE)
       num.threads = 1,
       predict_type = "prob",
       num.trees = to_tune(500),
-      mtry.ratio = to_tune(c(seq(0.1, 0.5, 0.1))),
+      mtry.ratio = to_tune(c(seq(0.05, 0.5, 0.05))),
       splitrule = to_tune(c("gini", "extratrees", "hellinger"))
       )
   }
