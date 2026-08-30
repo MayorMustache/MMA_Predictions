@@ -27,15 +27,17 @@ set.seed(42, kind = "L'Ecuyer-CMRG")
 
 # --- 2. Define some functions -------------------------------------------------
 
+
 prepare_data <- function(my_data){
   
   my_data %>% 
     
-    dplyr::mutate(date = as.integer(date)) %>% 
-    
-    dplyr::select(c(winner_red, date, title_fight, total_rounds,
-                              r_height, r_stance, r_age, r_rec_wins_all, r_rec_wins_ko, r_rec_wins_sub, r_rec_wins_decision, r_rec_loss_all, r_rec_loss_ko, r_rec_loss_sub, r_rec_loss_decision,
-                              b_height, b_stance, b_age, b_rec_wins_all, b_rec_wins_ko, b_rec_wins_sub, b_rec_wins_decision, b_rec_loss_all, b_rec_loss_ko, b_rec_loss_sub, b_rec_loss_decision)) %>% 
+    # Select the columns that will be used for the models
+    dplyr::select(
+      c(winner_red, date, title_fight, total_rounds, title_fight, 
+        difference_wins, difference_loss, difference_age, difference_winrate,
+        r_height, r_stance, r_age, r_rec_wins_all, r_rec_wins_ko, r_rec_wins_sub, r_rec_wins_decision, r_rec_loss_all, r_rec_loss_ko, r_rec_loss_sub, r_rec_loss_decision, 
+        b_height, b_stance, b_age, b_rec_wins_all, b_rec_wins_ko, b_rec_wins_sub, b_rec_wins_decision, b_rec_loss_all, b_rec_loss_ko, b_rec_loss_sub, b_rec_loss_decision)) %>% 
     
     dplyr::filter(!is.na(winner_red))
   
@@ -63,7 +65,7 @@ prepare_learner <- function(lrn_key, remove_corr = FALSE, logscale_trans = TRUE)
       lrn_key,
       predict_type = "prob",
       type = "C-classification",
-      kernel = to_tune(c("radial", "polynomial", "sigmoid")),
+      kernel = to_tune(c("radial", "polynomial", "sigmoid")), # c("radial", "polynomial", "sigmoid")
       cost  = to_tune(1e-2, 1e3, logscale = logscale_trans),
       gamma = to_tune(1e-3, 1e1,   logscale = logscale_trans)
     )
@@ -99,19 +101,37 @@ prepare_learner <- function(lrn_key, remove_corr = FALSE, logscale_trans = TRUE)
 
 # --- 3. Prepare the data, task and measures -----------------------------------
 
-# Load the datasets
-TrainData <- readRDS("data/PreparedTrainData.rds")
-TestData <- readRDS("data/PreparedTestData.rds")
+## --- 3.1 Load the datasets ---------------------------------------------------
 
-TrainData <- prepare_data(TrainData)
-TestData <- prepare_data(TestData)
+TrainData <- readRDS("data/PreparedTrainData.rds") %>% prepare_data()
+
+# Drop the earlier fights from the training data
+TrainData <- TrainData %>% dplyr::arrange(date) %>% dplyr::slice_tail(n = 6500)
+
+ValidationData <- readRDS("data/PreparedValidationData.rds") %>% prepare_data()
+
+## --- 3.2 Set up the training/tuning task
 
 tsk_Winner <- mlr3::as_task_classif(x = TrainData, target = "winner_red")
 tsk_Winner$col_roles$order <- "date"
 tsk_Winner$col_roles$feature <- setdiff(tsk_Winner$col_roles$feature, "date")
 
-inner_resampling <- mlr3::rsmp("forecast_cv", folds = 3, fixed_window = TRUE)
-outer_resampling <- mlr3::rsmp("forecast_cv", folds = 5, window_size = 5000, horizon = 500, fixed_window = TRUE)
+inner_resampling <- mlr3::rsmp("forecast_cv", folds = 3, window_size = 2000, horizon = 300, fixed_window = TRUE)
+outer_resampling <- mlr3::rsmp("forecast_cv", folds = 5, window_size = 4000, horizon = 400, fixed_window = TRUE)
+
+## --- 3.3 Set up the validation task
+
+tsk_Validation <- mlr3::as_task_classif(x = ValidationData, target = "winner_red")
+tsk_Validation$col_roles$order <- "date"
+tsk_Validation$col_roles$feature <- setdiff(tsk_Validation$col_roles$feature, "date")
+
+## --- 3.4 Set up the task for the final training (Training and Validation)
+
+FinalData <- dplyr::bind_rows(TrainData, ValidationData)
+
+tsk_Final <- mlr3::as_task_classif(x = FinalData, target = "winner_red")
+tsk_Final$col_roles$order <- "date"
+tsk_Final$col_roles$feature <- setdiff(tsk_Final$col_roles$feature, "date")
 
 # --- 4. Set up the models -----------------------------------------------------
 
@@ -148,18 +168,69 @@ at_xgboost <- mlr3tuning::auto_tuner(
 
 design <- mlr3::benchmark_grid(
   tasks       = tsk_Winner,
-  learners    = list(at_ranger, at_xgboost, at_svm),
+  learners    = list(
+    at_ranger, 
+    at_svm, 
+    at_xgboost),
   resamplings = outer_resampling
 )
 
 bmr <- mlr3::benchmark(design)
 bmr$aggregate(mlr3::msr("classif.bacc"))
 
-# --- 6. Check the performance on the test data --------------------------------
+# --- 6. Check the performance on the validation data --------------------------
 
-# --- 6. Train and save the final model ----------------------------------------
+## ... 6.1 Set up the validation learners and retrain them ---------------------
 
+validation_learners <- list(ranger = at_ranger, svm = at_svm, xgboost = at_xgboost)
 
+validation_results <- lapply(names(validation_learners), function(lrn_name) {
+  
+  at <- validation_learners[[lrn_name]]
+  
+  at$train(tsk_Winner)
+  pred <- at$predict(tsk_Validation)
+  
+  scores <- pred$score(mlr3::msrs(c("classif.bacc", "classif.acc", "classif.auc")))
+  
+  list(
+    learner    = lrn_name,
+    confusion  = pred$confusion,
+    scores     = scores
+  )
+  
+})
+
+names(validation_results) <- names(validation_learners)
+
+## --- 6.2 Show the performance ------------------------------------------------
+
+# Print confusion matrices and scores per model
+for (lrn_name in names(validation_results)) {
+  cat("\n===", lrn_name, "===\n")
+  print(validation_results[[lrn_name]]$confusion)
+  print(validation_results[[lrn_name]]$scores)
+}
+
+# Combine scores into a single comparison table
+dplyr::bind_rows(lapply(names(validation_results), function(lrn_name) { c(learner = lrn_name, validation_results[[lrn_name]]$scores) }))
+
+# --- 7. Train and save the final model ----------------------------------------
+
+## --- 7.1 Save the tuned models
+
+for(lrn_name in names(validation_learners)) {
+  saveRDS(validation_learners[[lrn_name]], file = paste0("models/Winner_Tuned_", lrn_name, ".rds"))
+}
+
+## --- 7.2 Train and save the models on all the data
+
+final_learners <- list(ranger = at_ranger, svm = at_svm, xgboost = at_xgboost)
+
+for (lrn_name in names(final_learners)) {
+  final_learners[[lrn_name]]$train(tsk_Final)
+  saveRDS(final_learners[[lrn_name]], file = paste0("models/Winner_Final_", lrn_name, ".rds"))
+}
 
 
 

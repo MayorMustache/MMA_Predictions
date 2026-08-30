@@ -179,7 +179,7 @@ if winner_names:
         )
     else:
         df_winner = df_winner_new
-    df_winner.to_csv(EVENT_DETAILS_PATH, index=False)
+    df_winner.drop_duplicates(subset='fight_id', keep='last').to_csv(EVENT_DETAILS_PATH, index=False)
     print(f"event_details.csv updated: {len(df_winner)} total rows.")
 else:
     # Load existing for use in merge later
@@ -399,7 +399,7 @@ if fight_details:
         )
     else:
         df_fight = df_fight_new
-    df_fight.to_csv(FIGHT_DETAILS_PATH, index=False)
+    df_fight.drop_duplicates(subset='fight_id', keep='last').to_csv(FIGHT_DETAILS_PATH, index=False)
     print(f"fight_details.csv updated: {len(df_fight)} total rows.")
 else:
     df_fight = pd.read_csv(FIGHT_DETAILS_PATH) if FIGHT_DETAILS_PATH.exists() else pd.DataFrame()
@@ -510,7 +510,7 @@ if fighter_detail_data:
         )
     else:
         df_fighter = df_fighter_new
-    df_fighter.to_csv(FIGHTER_DETAILS_PATH, index=False)
+    df_fighter.drop_duplicates(subset='id', keep='last').to_csv(FIGHTER_DETAILS_PATH, index=False)
     print(f"fighter_details.csv updated: {len(df_fighter)} total rows.")
 else:
     df_fighter = pd.read_csv(FIGHTER_DETAILS_PATH) if FIGHTER_DETAILS_PATH.exists() else pd.DataFrame()
@@ -542,7 +542,7 @@ df_fight['date']  = pd.to_datetime(df_fight['date']).dt.strftime("%Y/%m/%d")
 df_fight['r_dob'] = pd.to_datetime(df_fight['r_dob']).dt.strftime("%Y/%m/%d")
 df_fight['b_dob'] = pd.to_datetime(df_fight['b_dob']).dt.strftime("%Y/%m/%d")
 
-df_fight.to_csv(UFC_PATH, index=False)
+df_fight.drop_duplicates(subset='fight_id', keep='last').to_csv(UFC_PATH, index=False)
 print(f"Final dataset saved: {len(df_fight)} rows → {UFC_PATH}")
 
 # --- 9. Save scraped event URLs -----------------------------------------------
@@ -689,5 +689,5 @@ with sync_playwright() as p:
     browser.close()
 
 df_upcoming = pd.DataFrame(data=upcoming_data)
-df_upcoming.to_csv(UPCOMING_EVENTS_PATH, index=False)
+df_upcoming.drop_duplicates(subset='fight_id', keep='last').to_csv(UPCOMING_EVENTS_PATH, index=False)
 print(f"upcoming_events.csv saved: {len(df_upcoming)} bouts across {len(upcoming_events)} events → {UPCOMING_EVENTS_PATH}")

@@ -4,7 +4,7 @@
 # Description: This script calculates additional variables and paritioning the 
 #              data into train, test and validation. 
 # Author:      Michael Schenk
-# Dataset:     UFC Data by https://www.kaggle.com/datasets/neelagiriaditya/ufc-datasets-1994-2025
+# Dataset:     UFC Data scrapped by WebScrapper.px
 # =============================================================================
 
 # --- 1. Setup and packages ----------------------------------------------------
@@ -16,10 +16,10 @@ Sys.setLanguage("en")
 rm(list = ls())
 
 # Load the needed packages
-pacman::p_load(dplyr, tidyr, RKaggle, lubridate, forcats)
+pacman::p_load(dplyr, tidyr, lubridate, forcats)
 
 # Load the dataset from Kaggle
-KaggleData <- RKaggle::get_dataset("neelagiriaditya/ufc-datasets-1994-2025")
+RawData <- read.csv2("data/RawData/UFC.csv", sep = ",")
 
 # --- 2. Self defined functions ------------------------------------------------
 
@@ -35,7 +35,7 @@ custome_cumsum <- function(values){
 
 # --- 3. Calculate Variables that can change every fight------------------------
 
-ChangingVariables <- KaggleData[[4]] %>% 
+ChangingVariables <- RawData %>% 
   
   # Select the relevant column
   dplyr::select(event_id, date, fight_id, r_id, b_id, winner_id, method) %>% 
@@ -78,7 +78,7 @@ ChangingVariables <- KaggleData[[4]] %>%
 
 # --- 4. Prepare the final dataset ---------------------------------------------
 
-FullPreparedData <- KaggleData[[4]] %>%  
+FullPreparedData <- RawData %>%  
   
   # Merge the changing variables. This has to be done twice - once for the red 
   # corner and once for the blue corner.
@@ -89,7 +89,6 @@ FullPreparedData <- KaggleData[[4]] %>%
   
   # Repeat this for the blue corner
   dplyr::left_join(x = ., y = ChangingVariables, by = c("b_id" = "fighter_id", "fight_id" = "fight_id", "event_id" = "event_id", "date" = "date")) %>% 
-  
   dplyr::rename(b_rec_wins_all = rec_wins_all, b_rec_wins_sub = rec_wins_sub, b_rec_wins_ko = rec_wins_ko, b_rec_wins_decision = rec_wins_decision, b_rec_loss_all = rec_loss_all, b_rec_loss_sub = rec_loss_sub, b_rec_loss_ko = rec_loss_ko, b_rec_loss_decision = rec_loss_decision, b_rec_other = rec_other, b_rec_winrate = rec_winrate) %>% 
   
   # Calculate some other variables
@@ -102,50 +101,29 @@ FullPreparedData <- KaggleData[[4]] %>%
                 difference_age = r_age - b_age,
                 difference_winrate = r_rec_winrate - b_rec_winrate) %>% 
   
+  # Change the type of some variables in order for mlr3, etc. to work
+  dplyr::mutate(dplyr::across(c(location, division, method, referee, title_fight, r_id, b_id, r_stance, b_stance), as.factor),
+                dplyr::across(c(r_sig_str_landed, b_sig_str_landed, r_td_landed, b_td_landed), as.numeric)) %>% 
+  
+
   # Calculate some possible target variables
   dplyr::mutate(TotalSigStrikes = r_sig_str_landed + b_sig_str_landed,
                 TotalTakedown = r_td_landed + b_td_landed,
-                winner_red = winner_id == r_id) %>% 
+                winner_red = winner_id == r_id) 
   
-  # Regroup some of the factor varibles
-  
-  
-  # Change the type of somme variables in order for mlr3, etc. to work
-  dplyr::mutate(dplyr::across(c(location, division, method, referee, r_id, b_id, r_stance, b_stance), as.factor))
 
 
 
-
-FullPreparedData <- FullPreparedData %>%
-  mutate(division = case_when(
-    str_detect(division, "women's strawweight") ~ "women's strawweight",
-    str_detect(division, "women's flyweight")   ~ "women's flyweight",
-    str_detect(division, "women's bantamweight") ~ "women's bantamweight",
-    str_detect(division, "women's featherweight") ~ "women's featherweight",
-    str_detect(division, "light heavyweight")   ~ "light heavyweight",
-    str_detect(division, "super heavyweight")   ~ "super heavyweight",
-    str_detect(division, "heavyweight")         ~ "heavyweight",
-    str_detect(division, "middleweight")        ~ "middleweight",
-    str_detect(division, "welterweight")        ~ "welterweight",
-    str_detect(division, "featherweight")       ~ "featherweight",
-    str_detect(division, "lightweight")         ~ "lightweight",
-    str_detect(division, "bantamweight")        ~ "bantamweight",
-    str_detect(division, "flyweight")           ~ "flyweight",
-    str_detect(division, "strawweight")         ~ "strawweight",
-    TRUE ~ "other"
-  ))
 
 # --- 5. Partition the data into train, test and validation --------------------
 
-PreparedTrainData <- subset(FullPreparedData, date < "2024-01-01")
-PreparedTestData <- subset(FullPreparedData, date >= "2024-01-01" & date < "2025-01-01")
+PreparedTrainData <- subset(FullPreparedData, date < "2025-01-01")
 PreparedValidationData <- subset(FullPreparedData, date >= "2025-01-01")
 
 
 # --- 6. Saving the prepared datasets ------------------------------------------
 
-saveRDS(object = FullPreparedData, file = "Data/FullPreparedData.rds")
-saveRDS(object = PreparedTrainData, file = "Data/PreparedTrainData.rds")
-saveRDS(object = PreparedTestData, file = "Data/PreparedTestData.rds")
-saveRDS(object = PreparedValidationData, file = "Data/PreparedValidationData.rds")
+saveRDS(object = FullPreparedData, file = "data/FullPreparedData.rds")
+saveRDS(object = PreparedTrainData, file = "data/PreparedTrainData.rds")
+saveRDS(object = PreparedValidationData, file = "data/PreparedValidationData.rds")
 
