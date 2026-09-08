@@ -2,7 +2,7 @@
 # Data Preperation - Feature Engineering 
 # =============================================================================
 # Description: This script calculates additional variables and paritioning the 
-#              data into train, test and validation. 
+#              data into train and validation subsets. 
 # Author:      Michael Schenk
 # Dataset:     UFC Data scrapped by WebScrapper.px
 # =============================================================================
@@ -23,12 +23,57 @@ RawData <- read.csv2("data/RawData/UFC.csv", sep = ",")
 
 # --- 2. Self defined functions ------------------------------------------------
 
-# Define a custome cumsum function that can handle NAs
+## --- 2.1 Custome cumsum function that can handle NAs -------------------------
+
 custome_cumsum <- function(values){
   
   values = tidyr::replace_na(values, 0)
   
   return(cumsum(values))
+  
+}
+
+## --- 2.2 Custome function for calculating win/lossstreaks in the UFC ---------
+
+custome_streak <- function(wins, losses){
+  
+  total_streak = wins
+  current_streak = 0
+  
+  for(i in seq_along(wins)){
+    
+    # If neither win or loss (draw or no contest) leave as is
+    
+    # Increase by 1 if won and already positive
+    if(wins[i] == 1 & current_streak >= 0){
+      
+      current_streak = current_streak + 1
+      
+    }
+    # Set to 1 if won and previously negative
+    else if(wins[i] == 1 & current_streak < 0){
+      
+      current_streak = 1
+
+    }
+    # Set to -1 if lost and previously positive
+    else if(losses[i] == 1 & current_streak > 0){
+      
+      current_streak = -1
+
+    }
+    # Decrease by 1 if lost and previously negative
+    else if(losses[i] == 1 & current_streak <= 0){
+      
+      current_streak = current_streak -1 
+      
+    }
+    
+    total_streak[i] = current_streak
+    
+  }
+  
+  return(total_streak)
   
 }
 
@@ -71,7 +116,8 @@ ChangingVariables <- RawData %>%
                 rec_loss_ko = c(0, head(custome_cumsum(helper_match_loss_ko), n = -1)),
                 rec_loss_decision = c(0, head(custome_cumsum(helper_match_loss_decision), n = -1)),
                 rec_other = c(0, head(custome_cumsum(helper_match_other), n = -1)),
-                rec_winrate = ifelse(is.nan(rec_wins_all/(rec_wins_all + rec_loss_all + rec_other)), yes = 0, no = rec_wins_all/(rec_wins_all + rec_loss_all + rec_other))) %>% 
+                rec_winrate = ifelse(is.nan(rec_wins_all/(rec_wins_all + rec_loss_all + rec_other)), yes = 0, no = rec_wins_all/(rec_wins_all + rec_loss_all + rec_other)),
+                ufc_winstreak = c(0, head(custome_streak(wins = helper_match_win_all, losses = helper_match_loss_all), n = -1))) %>% 
   
   # Drop the helper and other columns
   dplyr::select(-c(tidyr::starts_with("helper"), winner_id, method, corner))
@@ -85,11 +131,11 @@ FullPreparedData <- RawData %>%
   dplyr::left_join(x = ., y = ChangingVariables, by = c("r_id" = "fighter_id", "fight_id" = "fight_id", "event_id" = "event_id", "date" = "date")) %>% 
   
   # Rename the columns regarding the records
-  dplyr::rename(r_rec_wins_all = rec_wins_all, r_rec_wins_sub = rec_wins_sub, r_rec_wins_ko = rec_wins_ko, r_rec_wins_decision = rec_wins_decision, r_rec_loss_all = rec_loss_all, r_rec_loss_sub = rec_loss_sub, r_rec_loss_ko = rec_loss_ko, r_rec_loss_decision = rec_loss_decision, r_rec_other = rec_other, r_rec_winrate = rec_winrate) %>% 
+  dplyr::rename(r_rec_wins_all = rec_wins_all, r_rec_wins_sub = rec_wins_sub, r_rec_wins_ko = rec_wins_ko, r_rec_wins_decision = rec_wins_decision, r_rec_loss_all = rec_loss_all, r_rec_loss_sub = rec_loss_sub, r_rec_loss_ko = rec_loss_ko, r_rec_loss_decision = rec_loss_decision, r_rec_other = rec_other, r_rec_winrate = rec_winrate, r_ufc_winstreak = ufc_winstreak) %>% 
   
   # Repeat this for the blue corner
   dplyr::left_join(x = ., y = ChangingVariables, by = c("b_id" = "fighter_id", "fight_id" = "fight_id", "event_id" = "event_id", "date" = "date")) %>% 
-  dplyr::rename(b_rec_wins_all = rec_wins_all, b_rec_wins_sub = rec_wins_sub, b_rec_wins_ko = rec_wins_ko, b_rec_wins_decision = rec_wins_decision, b_rec_loss_all = rec_loss_all, b_rec_loss_sub = rec_loss_sub, b_rec_loss_ko = rec_loss_ko, b_rec_loss_decision = rec_loss_decision, b_rec_other = rec_other, b_rec_winrate = rec_winrate) %>% 
+  dplyr::rename(b_rec_wins_all = rec_wins_all, b_rec_wins_sub = rec_wins_sub, b_rec_wins_ko = rec_wins_ko, b_rec_wins_decision = rec_wins_decision, b_rec_loss_all = rec_loss_all, b_rec_loss_sub = rec_loss_sub, b_rec_loss_ko = rec_loss_ko, b_rec_loss_decision = rec_loss_decision, b_rec_other = rec_other, b_rec_winrate = rec_winrate, b_ufc_winstreak = ufc_winstreak) %>% 
   
   # Calculate some other variables
   # Note: The 'difference' variables are based on the difference between the red
@@ -117,8 +163,8 @@ FullPreparedData <- RawData %>%
 
 # --- 5. Partition the data into train, test and validation --------------------
 
-PreparedTrainData <- subset(FullPreparedData, date < "2025-01-01")
-PreparedValidationData <- subset(FullPreparedData, date >= "2025-01-01")
+PreparedTrainData <- subset(FullPreparedData, date < "2026-01-01")
+PreparedValidationData <- subset(FullPreparedData, date >= "2026-01-01")
 
 
 # --- 6. Saving the prepared datasets ------------------------------------------

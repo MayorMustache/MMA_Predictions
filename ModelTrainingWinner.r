@@ -3,7 +3,7 @@
 # =============================================================================
 # Description: This script trains various models to predict the winner
 # Author:      Michael Schenk
-# Date:        13.05.2026
+# Date:        08.09.2026
 # Dataset:     Prepared Data from Data.Preparation.r
 # =============================================================================
 
@@ -36,8 +36,8 @@ prepare_data <- function(my_data){
     dplyr::select(
       c(winner_red, date, title_fight, total_rounds, title_fight, 
         difference_wins, difference_loss, difference_age, difference_winrate,
-        r_height, r_stance, r_age, r_rec_wins_all, r_rec_wins_ko, r_rec_wins_sub, r_rec_wins_decision, r_rec_loss_all, r_rec_loss_ko, r_rec_loss_sub, r_rec_loss_decision, 
-        b_height, b_stance, b_age, b_rec_wins_all, b_rec_wins_ko, b_rec_wins_sub, b_rec_wins_decision, b_rec_loss_all, b_rec_loss_ko, b_rec_loss_sub, b_rec_loss_decision)) %>% 
+        r_height, r_stance, r_age, r_rec_wins_all, r_rec_wins_ko, r_rec_wins_sub, r_rec_wins_decision, r_rec_loss_all, r_rec_loss_ko, r_rec_loss_sub, r_rec_loss_decision, r_rec_winstreak, 
+        b_height, b_stance, b_age, b_rec_wins_all, b_rec_wins_ko, b_rec_wins_sub, b_rec_wins_decision, b_rec_loss_all, b_rec_loss_ko, b_rec_loss_sub, b_rec_loss_decision, b_rec_winstreak)) %>% 
     
     dplyr::filter(!is.na(winner_red))
   
